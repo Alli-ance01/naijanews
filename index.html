@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nigerian News AI Chat | ThisDay, Punch &amp; Vanguard Updates</title>
+  <meta name="description" content="Get instant Nigerian news updates powered by AI. Ask questions about breaking news from ThisDay, Punch, and Vanguard newspapers in real-time." />
+  <meta property="og:title" content="Nigerian News AI Chat" />
+  <meta property="og:description" content="Instant news updates from ThisDay, Punch &amp; Vanguard — powered by AI." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ─── CSS Reset & Variables ─────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --ng-green:     #008751;
+      --ng-green-dk:  #005f38;
+      --ng-green-lt:  #00a963;
+      --ng-green-bg:  #e6f4ee;
+      --white:        #ffffff;
+      --gray-50:      #f8f9fa;
+      --gray-100:     #f0f2f5;
+      --gray-200:     #e4e6ea;
+      --gray-400:     #9ba3af;
+      --gray-600:     #4b5563;
+      --gray-800:     #1f2937;
+      --shadow-sm:    0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.06);
+      --shadow-md:    0 4px 12px rgba(0,0,0,.10), 0 2px 4px rgba(0,0,0,.06);
+      --radius-sm:    8px;
+      --radius-md:    16px;
+      --radius-lg:    24px;
+      --radius-xl:    32px;
+      --font:         'Inter', system-ui, -apple-system, sans-serif;
+      --transition:   0.2s ease;
+    }
+
+    html { height: 100%; }
+
+    body {
+      font-family: var(--font);
+      background: var(--gray-100);
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      color: var(--gray-800);
+      overflow: hidden;
+    }
+
+    /* ─── Background Pattern ────────────────────────────────── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 50% -10%, rgba(0,135,81,.15) 0%, transparent 70%),
+        radial-gradient(ellipse 50% 40% at 100% 100%, rgba(0,135,81,.08) 0%, transparent 60%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ─── Layout Wrapper ────────────────────────────────────── */
+    .app-wrapper {
+      position: relative;
+      z-index: 1;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      max-width: 860px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    /* ─── Header ────────────────────────────────────────────── */
+    .header {
+      background: linear-gradient(135deg, var(--ng-green-dk) 0%, var(--ng-green) 60%, var(--ng-green-lt) 100%);
+      padding: 0 20px;
+      box-shadow: var(--shadow-md);
+      flex-shrink: 0;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .header::after {
+      content: '';
+      position: absolute;
+      right: -40px;
+      top: -40px;
+      width: 200px;
+      height: 200px;
+      border-radius: 50%;
+      background: rgba(255,255,255,.06);
+      pointer-events: none;
+    }
+
+    .header-inner {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 16px 0;
+    }
+
+    .header-logo {
+      width: 46px;
+      height: 46px;
+      background: rgba(255,255,255,.18);
+      border-radius: var(--radius-sm);
+      display: grid;
+      place-items: center;
+      font-size: 22px;
+      flex-shrink: 0;
+      backdrop-filter: blur(4px);
+      border: 1px solid rgba(255,255,255,.25);
+    }
+
+    .header-text { flex: 1; min-width: 0; }
+
+    .header-title {
+      font-size: clamp(1rem, 2.5vw, 1.25rem);
+      font-weight: 700;
+      color: var(--white);
+      letter-spacing: -.3px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .header-tagline {
+      font-size: clamp(.68rem, 1.8vw, .8rem);
+      color: rgba(255,255,255,.78);
+      font-weight: 400;
+      margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .header-sources {
+      display: flex;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .source-badge {
+      background: rgba(255,255,255,.18);
+      color: var(--white);
+      font-size: .62rem;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: 20px;
+      border: 1px solid rgba(255,255,255,.3);
+      backdrop-filter: blur(4px);
+      letter-spacing: .3px;
+    }
+
+    /* ─── Status Bar ────────────────────────────────────────── */
+    .status-bar {
+      background: var(--white);
+      border-bottom: 1px solid var(--gray-200);
+      padding: 8px 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #22c55e;
+      animation: pulse-dot 2s ease-in-out infinite;
+      flex-shrink: 0;
+    }
+
+    .status-dot.offline { background: #ef4444; animation: none; }
+
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: .6; transform: scale(.85); }
+    }
+
+    .status-text {
+      font-size: .75rem;
+      color: var(--gray-600);
+      font-weight: 500;
+    }
+
+    .session-id {
+      margin-left: auto;
+      font-size: .65rem;
+      color: var(--gray-400);
+      font-family: monospace;
+      background: var(--gray-100);
+      padding: 2px 8px;
+      border-radius: 20px;
+    }
+
+    /* ─── Chat Area ─────────────────────────────────────────── */
+    .chat-area {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      scroll-behavior: smooth;
+      background: transparent;
+    }
+
+    .chat-area::-webkit-scrollbar { width: 5px; }
+    .chat-area::-webkit-scrollbar-track { background: transparent; }
+    .chat-area::-webkit-scrollbar-thumb { background: var(--gray-200); border-radius: 10px; }
+
+    /* ─── Welcome Banner ────────────────────────────────────── */
+    .welcome-banner {
+      background: var(--white);
+      border-radius: var(--radius-lg);
+      padding: 28px 24px;
+      text-align: center;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--gray-200);
+      margin-bottom: 8px;
+    }
+
+    .welcome-icon { font-size: 3rem; margin-bottom: 12px; }
+
+    .welcome-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--gray-800);
+      margin-bottom: 6px;
+    }
+
+    .welcome-sub {
+      font-size: .85rem;
+      color: var(--gray-600);
+      line-height: 1.6;
+      margin-bottom: 18px;
+    }
+
+    .quick-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+    }
+
+    .chip {
+      background: var(--ng-green-bg);
+      color: var(--ng-green-dk);
+      font-size: .78rem;
+      font-weight: 500;
+      padding: 7px 14px;
+      border-radius: 20px;
+      cursor: pointer;
+      border: 1px solid rgba(0,135,81,.2);
+      transition: all var(--transition);
+      user-select: none;
+    }
+
+    .chip:hover {
+      background: var(--ng-green);
+      color: var(--white);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0,135,81,.3);
+    }
+
+    /* ─── Message Bubbles ───────────────────────────────────── */
+    .msg-row {
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+      animation: slide-in .28s ease-out;
+    }
+
+    @keyframes slide-in {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .msg-row.user { flex-direction: row-reverse; }
+
+    .avatar {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      display: grid;
+      place-items: center;
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .avatar.ai-avatar {
+      background: linear-gradient(135deg, var(--ng-green-dk), var(--ng-green-lt));
+      color: var(--white);
+      box-shadow: 0 2px 8px rgba(0,135,81,.35);
+      font-size: 14px;
+    }
+
+    .avatar.user-avatar {
+      background: linear-gradient(135deg, #1f2937, #374151);
+      color: var(--white);
+      font-size: 14px;
+    }
+
+    .bubble-wrap { display: flex; flex-direction: column; max-width: min(75%, 560px); }
+
+    .msg-row.user .bubble-wrap { align-items: flex-end; }
+
+    .bubble {
+      padding: 12px 16px;
+      border-radius: var(--radius-md);
+      font-size: .9rem;
+      line-height: 1.65;
+      word-break: break-word;
+      position: relative;
+    }
+
+    .bubble.user {
+      background: linear-gradient(135deg, var(--ng-green) 0%, var(--ng-green-lt) 100%);
+      color: var(--white);
+      border-bottom-right-radius: 4px;
+      box-shadow: 0 3px 10px rgba(0,135,81,.3);
+    }
+
+    .bubble.ai {
+      background: var(--white);
+      color: var(--gray-800);
+      border-bottom-left-radius: 4px;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--gray-200);
+    }
+
+    .bubble.error {
+      background: #fef2f2;
+      color: #b91c1c;
+      border: 1px solid #fecaca;
+      border-bottom-left-radius: 4px;
+      box-shadow: none;
+    }
+
+    .msg-time {
+      font-size: .65rem;
+      color: var(--gray-400);
+      margin-top: 4px;
+      padding: 0 4px;
+    }
+
+    /* Source tags inside AI bubble */
+    .bubble .sources {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid var(--gray-200);
+    }
+
+    .source-tag {
+      font-size: .65rem;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 20px;
+      letter-spacing: .3px;
+    }
+
+    .source-tag.thisday  { background: #dbeafe; color: #1d4ed8; }
+    .source-tag.punch    { background: #fef3c7; color: #b45309; }
+    .source-tag.vanguard { background: #fce7f3; color: #be185d; }
+
+    /* ─── Typing Indicator ──────────────────────────────────── */
+    .typing-row {
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+      animation: slide-in .28s ease-out;
+    }
+
+    .typing-bubble {
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-md);
+      border-bottom-left-radius: 4px;
+      padding: 14px 18px;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .dot {
+      width: 7px;
+      height: 7px;
+      background: var(--gray-400);
+      border-radius: 50%;
+      animation: bounce 1.3s ease-in-out infinite;
+    }
+
+    .dot:nth-child(2) { animation-delay: .18s; }
+    .dot:nth-child(3) { animation-delay: .36s; }
+
+    @keyframes bounce {
+      0%, 80%, 100% { transform: translateY(0); opacity: .5; }
+      40%            { transform: translateY(-6px); opacity: 1; }
+    }
+
+    /* ─── Input Area ────────────────────────────────────────── */
+    .input-area {
+      background: var(--white);
+      border-top: 1px solid var(--gray-200);
+      padding: 14px 16px 18px;
+      flex-shrink: 0;
+      box-shadow: 0 -4px 20px rgba(0,0,0,.06);
+    }
+
+    .input-row {
+      display: flex;
+      align-items: flex-end;
+      gap: 10px;
+      background: var(--gray-50);
+      border: 1.5px solid var(--gray-200);
+      border-radius: var(--radius-xl);
+      padding: 8px 8px 8px 16px;
+      transition: border-color var(--transition), box-shadow var(--transition);
+    }
+
+    .input-row:focus-within {
+      border-color: var(--ng-green);
+      box-shadow: 0 0 0 3px rgba(0,135,81,.12);
+      background: var(--white);
+    }
+
+    #chat-input {
+      flex: 1;
+      border: none;
+      outline: none;
+      background: transparent;
+      font-family: var(--font);
+      font-size: .92rem;
+      color: var(--gray-800);
+      resize: none;
+      max-height: 120px;
+      min-height: 24px;
+      line-height: 1.5;
+      padding: 3px 0;
+      overflow-y: auto;
+    }
+
+    #chat-input::placeholder { color: var(--gray-400); }
+    #chat-input::-webkit-scrollbar { width: 3px; }
+    #chat-input::-webkit-scrollbar-thumb { background: var(--gray-200); }
+
+    #send-btn {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, var(--ng-green), var(--ng-green-lt));
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+      transition: all var(--transition);
+      box-shadow: 0 2px 8px rgba(0,135,81,.35);
+    }
+
+    #send-btn:hover:not(:disabled) {
+      transform: scale(1.08);
+      box-shadow: 0 4px 14px rgba(0,135,81,.45);
+    }
+
+    #send-btn:active:not(:disabled) { transform: scale(.96); }
+
+    #send-btn:disabled {
+      background: var(--gray-200);
+      box-shadow: none;
+      cursor: not-allowed;
+    }
+
+    #send-btn svg { width: 18px; height: 18px; fill: var(--white); }
+
+    .input-hint {
+      font-size: .68rem;
+      color: var(--gray-400);
+      text-align: center;
+      margin-top: 8px;
+      padding: 0 4px;
+    }
+
+    /* ─── Scrolling news ticker ─────────────────────────────── */
+    .ticker-wrap {
+      background: var(--ng-green-dk);
+      overflow: hidden;
+      padding: 6px 0;
+      flex-shrink: 0;
+    }
+
+    .ticker {
+      display: flex;
+      white-space: nowrap;
+      animation: ticker-scroll 30s linear infinite;
+    }
+
+    @keyframes ticker-scroll {
+      from { transform: translateX(100vw); }
+      to   { transform: translateX(-100%); }
+    }
+
+    .ticker-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: rgba(255,255,255,.9);
+      font-size: .72rem;
+      font-weight: 500;
+      padding: 0 28px;
+    }
+
+    .ticker-dot { color: #4ade80; }
+
+    /* ─── Responsive ────────────────────────────────────────── */
+    @media (max-width: 600px) {
+      .header-sources { display: none; }
+      .session-id { display: none; }
+      .bubble-wrap { max-width: 85%; }
+      .welcome-banner { padding: 20px 16px; }
+      .chip { font-size: .73rem; padding: 6px 12px; }
+    }
+
+    /* ─── Utility ───────────────────────────────────────────── */
+    .hidden { display: none !important; }
+
+    /* Formatted AI text */
+    .bubble.ai strong { font-weight: 600; color: var(--ng-green-dk); }
+    .bubble.ai em { font-style: italic; }
+    .bubble.ai code {
+      background: var(--gray-100);
+      padding: 1px 5px;
+      border-radius: 4px;
+      font-size: .83em;
+      font-family: monospace;
+    }
+
+    .bubble.ai ul, .bubble.ai ol {
+      padding-left: 18px;
+      margin-top: 6px;
+    }
+
+    .bubble.ai li { margin-bottom: 4px; }
+  </style>
+</head>
+<body>
+
+<div class="app-wrapper">
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="header-inner">
+      <div class="header-logo" aria-hidden="true">&#127469;&#127468;</div>
+      <div class="header-text">
+        <h1 class="header-title">Nigerian News AI Chat</h1>
+        <p class="header-tagline">Get instant news updates from ThisDay, Punch &amp; Vanguard</p>
+      </div>
+      <div class="header-sources" aria-label="News sources">
+        <span class="source-badge">ThisDay</span>
+        <span class="source-badge">Punch</span>
+        <span class="source-badge">Vanguard</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- NEWS TICKER -->
+  <div class="ticker-wrap" aria-hidden="true">
+    <div class="ticker">
+      <span class="ticker-item"><span class="ticker-dot">&#9679;</span> Ask me about breaking news from Nigeria's top newspapers</span>
+      <span class="ticker-item"><span class="ticker-dot">&#9679;</span> Politics &middot; Economy &middot; Sports &middot; Entertainment &middot; Business</span>
+      <span class="ticker-item"><span class="ticker-dot">&#9679;</span> Powered by AI &middot; Sources: ThisDay &middot; Punch &middot; Vanguard</span>
+      <span class="ticker-item"><span class="ticker-dot">&#9679;</span> Type a question to get started &mdash; I understand context!</span>
+    </div>
+  </div>
+
+  <!-- STATUS BAR -->
+  <div class="status-bar">
+    <div class="status-dot" id="status-dot" role="status" aria-label="Connection status"></div>
+    <span class="status-text" id="status-text">AI connected &amp; ready</span>
+    <span class="session-id" id="session-display"></span>
+  </div>
+
+  <!-- CHAT AREA -->
+  <main class="chat-area" id="chat-area" role="log" aria-live="polite" aria-label="Chat messages">
+
+    <!-- Welcome Banner -->
+    <div class="welcome-banner" id="welcome-banner">
+      <div class="welcome-icon" aria-hidden="true">&#128240;</div>
+      <h2 class="welcome-title">Your Nigerian News Assistant</h2>
+      <p class="welcome-sub">
+        Ask me anything about current Nigerian affairs.<br/>
+        I pull from <strong>ThisDay</strong>, <strong>Punch</strong>, and <strong>Vanguard</strong> in real-time.
+      </p>
+      <div class="quick-chips" role="list" aria-label="Quick question suggestions">
+        <button class="chip" role="listitem" id="chip-1" onclick="sendChip(this)">&#128293; Today's top stories</button>
+        <button class="chip" role="listitem" id="chip-2" onclick="sendChip(this)">&#127963;&#65039; Political news</button>
+        <button class="chip" role="listitem" id="chip-3" onclick="sendChip(this)">&#128200; Economy &amp; business</button>
+        <button class="chip" role="listitem" id="chip-4" onclick="sendChip(this)">&#9917; Sports update</button>
+        <button class="chip" role="listitem" id="chip-5" onclick="sendChip(this)">&#127757; International news</button>
+        <button class="chip" role="listitem" id="chip-6" onclick="sendChip(this)">&#128161; Tech in Nigeria</button>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- INPUT AREA -->
+  <div class="input-area">
+    <div class="input-row">
+      <textarea
+        id="chat-input"
+        placeholder="Ask about Nigerian news... (Enter to send, Shift+Enter for new line)"
+        rows="1"
+        aria-label="Type your message"
+      ></textarea>
+      <button id="send-btn" aria-label="Send message" title="Send message">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+        </svg>
+      </button>
+    </div>
+    <p class="input-hint" aria-hidden="true">
+      &#9889; Powered by n8n AI workflow &nbsp;&middot;&nbsp; Sources updated regularly
+    </p>
+  </div>
+
+</div>
+
+<script>
+  
+  var CONFIG = {
+    WEBHOOK_URL: 'https://alliance12.app.n8n.cloud/webhook/b567d98b-aabb-4963-b0f8-6b1e8b5f8959/chat',
+    MAX_RETRIES: 2,
+    TIMEOUT_MS:  30000
+  };
+
+  /* =========================================================
+     STATE
+     ========================================================= */
+  var STATE = {
+    sessionId: null,
+    isLoading: false,
+    history:   []
+  };
+
+  /* =========================================================
+     INIT
+     ========================================================= */
+  function init() {
+    // Generate or restore session ID
+    STATE.sessionId = sessionStorage.getItem('ng_news_session');
+    if (!STATE.sessionId) {
+      STATE.sessionId = generateSessionId();
+      sessionStorage.setItem('ng_news_session', STATE.sessionId);
+    }
+
+    // Display truncated session ID
+    var display = document.getElementById('session-display');
+    display.textContent = 'Session: ' + STATE.sessionId.slice(0, 8) + '...';
+
+    // Restore history from sessionStorage
+    var saved = sessionStorage.getItem('ng_news_history');
+    if (saved) {
+      try {
+        STATE.history = JSON.parse(saved);
+        if (STATE.history.length > 0) {
+          hideWelcomeBanner();
+          STATE.history.forEach(function(msg) {
+            renderMessage(msg.role, msg.content, msg.time, false);
+          });
+          scrollToBottom();
+        }
+      } catch(e) {
+        STATE.history = [];
+      }
+    }
+
+    // Bind events
+    var input   = document.getElementById('chat-input');
+    var sendBtn = document.getElementById('send-btn');
+
+    input.addEventListener('keydown', onKeyDown);
+    input.addEventListener('input', autoResize);
+    sendBtn.addEventListener('click', handleSend);
+  }
+
+  /* ─── Helpers ─────────────────────────────────────────── */
+  function generateSessionId() {
+    if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+      return crypto.randomUUID();
+    }
+    return 'sess-' + Date.now() + '-' + Math.random().toString(36).slice(2, 9);
+  }
+
+  function getTime() {
+    return new Date().toLocaleTimeString('en-NG', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  function hideWelcomeBanner() {
+    var banner = document.getElementById('welcome-banner');
+    if (banner) banner.classList.add('hidden');
+  }
+
+  function scrollToBottom() {
+    var area = document.getElementById('chat-area');
+    requestAnimationFrame(function() {
+      area.scrollTop = area.scrollHeight;
+    });
+  }
+
+  function setStatus(online, text) {
+    var dot  = document.getElementById('status-dot');
+    var span = document.getElementById('status-text');
+    dot.className = 'status-dot' + (online ? '' : ' offline');
+    span.textContent = online ? 'AI connected & ready' : text;
+  }
+
+  function autoResize() {
+    var el = document.getElementById('chat-input');
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+  }
+
+  /* ─── Keyboard ────────────────────────────────────────── */
+  function onKeyDown(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  }
+
+  /* ─── Quick Chip ──────────────────────────────────────── */
+  function sendChip(btn) {
+    // Strip leading emoji characters (non-word, non-space)
+    var rawText = btn.textContent.trim();
+    // Remove leading emoji (Unicode chars before the first ASCII letter)
+    var text = rawText.replace(/^[\u{1F000}-\u{1FFFF}\u{2600}-\u{27BF}\uD800-\uDFFF\s]+/u, '').trim();
+    if (!text) text = rawText;
+    var input = document.getElementById('chat-input');
+    input.value = text;
+    autoResize();
+    handleSend();
+  }
+
+  /* ─── Handle Send ─────────────────────────────────────── */
+  function handleSend() {
+    if (STATE.isLoading) return;
+    var input = document.getElementById('chat-input');
+    var text  = input.value.trim();
+    if (!text) return;
+
+    hideWelcomeBanner();
+
+    input.value = '';
+    input.style.height = 'auto';
+
+    var time = getTime();
+    renderMessage('user', text, time, true);
+    fetchAIResponse(text, 0);
+  }
+
+  /* ─── Render Message ──────────────────────────────────── */
+  function renderMessage(role, content, time, save) {
+    var area = document.getElementById('chat-area');
+
+    var row = document.createElement('div');
+    row.className = 'msg-row ' + role;
+
+    var avatar = document.createElement('div');
+    avatar.className = 'avatar ' + (role === 'user' ? 'user-avatar' : 'ai-avatar');
+    avatar.setAttribute('aria-hidden', 'true');
+    avatar.textContent = role === 'user' ? '\uD83D\uDC64' : '\uD83E\uDD16';
+
+    var wrap = document.createElement('div');
+    wrap.className = 'bubble-wrap';
+
+    var bubble = document.createElement('div');
+    bubble.className = 'bubble ' + role;
+    bubble.innerHTML = formatContent(content, role);
+
+    var ts = document.createElement('div');
+    ts.className = 'msg-time';
+    ts.setAttribute('aria-label', 'Sent at ' + (time || getTime()));
+    ts.textContent = time || getTime();
+
+    wrap.appendChild(bubble);
+    wrap.appendChild(ts);
+
+    if (role === 'user') {
+      row.appendChild(wrap);
+      row.appendChild(avatar);
+    } else {
+      row.appendChild(avatar);
+      row.appendChild(wrap);
+    }
+
+    area.appendChild(row);
+    scrollToBottom();
+
+    if (save) {
+      STATE.history.push({ role: role, content: content, time: time || getTime() });
+      try { sessionStorage.setItem('ng_news_history', JSON.stringify(STATE.history)); } catch(e) {}
+    }
+  }
+
+  /* ─── Render Error ────────────────────────────────────── */
+  function renderError(message) {
+    var area = document.getElementById('chat-area');
+
+    var row = document.createElement('div');
+    row.className = 'msg-row ai';
+    row.setAttribute('role', 'alert');
+
+    var avatar = document.createElement('div');
+    avatar.className = 'avatar ai-avatar';
+    avatar.setAttribute('aria-hidden', 'true');
+    avatar.textContent = '\u26A0\uFE0F';
+
+    var wrap = document.createElement('div');
+    wrap.className = 'bubble-wrap';
+
+    var bubble = document.createElement('div');
+    bubble.className = 'bubble error';
+    bubble.textContent = message;
+
+    var ts = document.createElement('div');
+    ts.className = 'msg-time';
+    ts.textContent = getTime();
+
+    wrap.appendChild(bubble);
+    wrap.appendChild(ts);
+    row.appendChild(avatar);
+    row.appendChild(wrap);
+    area.appendChild(row);
+    scrollToBottom();
+  }
+
+  /* ─── Format Content ──────────────────────────────────── */
+  function escapeHtml(str) {
+    return str
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function formatContent(text, role) {
+    if (role === 'user') return escapeHtml(text).replace(/\n/g, '<br/>');
+
+    var html = escapeHtml(text)
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.+?)\*/g, '<em>$1</em>')
+      .replace(/`(.+?)`/g, '<code>$1</code>')
+      .replace(/\n\n/g, '</p><p>')
+      .replace(/\n/g, '<br/>');
+
+    html = '<p>' + html + '</p>';
+
+    var tags = [];
+    if (/thisday/i.test(text))  tags.push('<span class="source-tag thisday">ThisDay</span>');
+    if (/punch/i.test(text))    tags.push('<span class="source-tag punch">Punch</span>');
+    if (/vanguard/i.test(text)) tags.push('<span class="source-tag vanguard">Vanguard</span>');
+
+    if (tags.length) {
+      html += '<div class="sources">' + tags.join('') + '</div>';
+    }
+
+    return html;
+  }
+
+  /* ─── Typing Indicator ────────────────────────────────── */
+  function showTyping() {
+    var area = document.getElementById('chat-area');
+
+    var row = document.createElement('div');
+    row.className = 'typing-row';
+    row.id = 'typing-row';
+    row.setAttribute('aria-label', 'AI is typing');
+
+    var avatar = document.createElement('div');
+    avatar.className = 'avatar ai-avatar';
+    avatar.setAttribute('aria-hidden', 'true');
+    avatar.textContent = '\uD83E\uDD16';
+
+    var bubble = document.createElement('div');
+    bubble.className = 'typing-bubble';
+    bubble.innerHTML = '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
+
+    row.appendChild(avatar);
+    row.appendChild(bubble);
+    area.appendChild(row);
+    scrollToBottom();
+  }
+
+  function hideTyping() {
+    var el = document.getElementById('typing-row');
+    if (el) el.remove();
+  }
+
+  /* ─── Fetch AI Response ───────────────────────────────── */
+  function fetchAIResponse(userMessage, retries) {
+    STATE.isLoading = true;
+    document.getElementById('send-btn').disabled = true;
+    document.getElementById('status-text').textContent = 'AI is thinking...';
+    showTyping();
+
+    var controller = new AbortController();
+    var timeoutId  = setTimeout(function() { controller.abort(); }, CONFIG.TIMEOUT_MS);
+
+    var body = JSON.stringify({
+      action:    'sendMessage',
+      sessionId: STATE.sessionId,
+      chatInput: userMessage
+    });
+
+    fetch(CONFIG.WEBHOOK_URL, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    body,
+      signal:  controller.signal
+    })
+    .then(function(response) {
+      clearTimeout(timeoutId);
+      if (!response.ok) {
+        throw new Error('Server error: ' + response.status + ' ' + response.statusText);
+      }
+      return response.json();
+    })
+    .then(function(data) {
+      hideTyping();
+
+      var aiText = data.output
+        || data.message
+        || data.text
+        || data.response
+        || data.content
+        || (typeof data === 'string' ? data : null)
+        || 'I received your message, but could not parse the response.';
+
+      renderMessage('ai', aiText, getTime(), true);
+      setStatus(true, 'AI connected & ready');
+      STATE.isLoading = false;
+      document.getElementById('send-btn').disabled = false;
+      document.getElementById('chat-input').focus();
+    })
+    .catch(function(err) {
+      clearTimeout(timeoutId);
+      hideTyping();
+
+      if (err.name === 'AbortError') {
+        if (retries < CONFIG.MAX_RETRIES) {
+          document.getElementById('status-text').textContent = 'Retrying... (' + (retries + 1) + '/' + CONFIG.MAX_RETRIES + ')';
+          setTimeout(function() {
+            STATE.isLoading = false;
+            fetchAIResponse(userMessage, retries + 1);
+          }, 1200);
+          return;
+        }
+        renderError('\u23F1\uFE0F Request timed out. The AI took too long to respond. Please try again.');
+      } else if (!navigator.onLine) {
+        renderError('\uD83D\uDCE1 No internet connection. Please check your network and try again.');
+      } else {
+        renderError('\u274C Something went wrong: ' + err.message + '. Please check the webhook URL and try again.');
+      }
+
+      setStatus(false, 'Connection error — retry your message');
+      STATE.isLoading = false;
+      document.getElementById('send-btn').disabled = false;
+      document.getElementById('chat-input').focus();
+    });
+  }
+
+  /* ─── Online / Offline Detection ─────────────────────── */
+  window.addEventListener('online',  function() { setStatus(true,  'AI connected & ready'); });
+  window.addEventListener('offline', function() { setStatus(false, 'No internet connection'); });
+
+  /* ─── Boot ────────────────────────────────────────────── */
+  document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
